@@ -12,6 +12,8 @@ pyatmos = "^1.2.7"
 matplotlib = "^3.10.9"
 setuptools = "<72"
 aquarel = "^0.0.7"
+tqdm = "^4.67.3"
+rich = "^15.0.0"
 
 
 [build-system]
