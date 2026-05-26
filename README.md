@@ -1,4 +1,4 @@
-# BalloonWindSimulator
+# Balloon Wind-Band Simulator
 
 6-DOF helium weather balloon flight simulator with COESA-76 atmospheric modeling, layered wind bands, and RK45 numerical integration.
 
