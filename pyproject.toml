@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "balloon-sim"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+pyatmos = "^1.2.7"
+matplotlib = "^3.10.9"
+setuptools = "<72"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
