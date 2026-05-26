@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 from pyatmos import coesa76
 from numpy import sign, pi as PI, sqrt
+from aquarel import load_theme
+import matplotlib.dates as mdates
+from datetime import datetime, timedelta
 
 # Constants
 burst_time = 1e9                       # Placeholder
@@ -15,6 +18,7 @@ burst_radius = 8                       # [m] Radius at which the Balloon bursts
 time_step = 1                          # [s] Time step at which to simulate
 initial_height = 0                     # [m] Starting height of the balloon
 initial_radius = 0                     # [m] Starting radius of the balloon
+launch_time = datetime(2025, 1, 1, 9, 0, 0)   # Launch datetime
 DEBUG = False
 
 # Wind Bands
@@ -75,8 +79,9 @@ class System(object):
 
 		az = self.calculate(self.z, self.vz)
 		if self.r > burst_radius and t < self.burst_time:
-			print(f"After {t/3600:.3f} hours, The Balloon burst at ({self.x/1000:.3f}km, {self.y/1000:.3f}km, {self.z/1000:.3f}km) at a lateral distance {mag(self.x,self.y,0)/1000:.3f}km")
+			burst_clock = launch_time + timedelta(seconds=float(t))
 			self.burst_time = t
+			print(f"At {burst_clock.strftime('%H:%M:%S')}, The Balloon burst at ({self.x/1000:.3f}km, {self.y/1000:.3f}km, {self.z/1000:.3f}km) at a lateral distance {mag(self.x,self.y,0)/1000:.3f}km")
 			self.endpoint = [self.x,self.y,self.z]
 		if int(t) % 10 == 0 and abs(t-int(t)) < 0.01 and DEBUG:
 			print(f"Done for {t:.0f}s")
@@ -99,14 +104,23 @@ for i in range(0,6):
 	SOL.append(sol.y[i][:burst_index])
 SOL.append(sol.t[:burst_index])
 
+# Convert simulation time (seconds) to datetime objects
+timestamps = [launch_time + timedelta(seconds=float(t)) for t in SOL[6]]
+
+theme = load_theme("boxy_dark")
+theme.apply()
 
 fig = plt.figure(figsize=(12, 10))
 
 # Top-left: 3D Flight Depiction
 ax1 = fig.add_subplot(2, 2, 1, projection='3d')
-ax1.plot(SOL[0], SOL[1], SOL[2])
-ax1.scatter([SOL[0][0]], [SOL[1][0]], [SOL[2][0]],color='green')
-ax1.scatter(*system.endpoint,color='red')
+ax1.xaxis.pane.set_facecolor('black')
+ax1.yaxis.pane.set_facecolor('black')
+ax1.zaxis.pane.set_facecolor('black')
+ax1.minorticks_off()
+ax1.plot(SOL[0], SOL[1], SOL[2], color="#00FFFF")
+ax1.scatter([SOL[0][0]], [SOL[1][0]], [SOL[2][0]],color='#00FF00')
+ax1.scatter(*system.endpoint,color='#FF0000')
 ax1.set_xlabel('X Position (m)')
 ax1.set_ylabel('Y Position (m)')
 ax1.set_zlabel('Z Position (m)')
@@ -114,27 +128,34 @@ ax1.set_title('3D Flight Depiction')
 
 # Top-right: Lateral Trajectory
 ax2 = fig.add_subplot(2, 2, 2)
-ax2.plot(SOL[0], SOL[1], color='orange', zorder=0)
-ax2.scatter(SOL[0][0], SOL[1][0], color='green', zorder=1)
-ax2.scatter(SOL[0][-1], SOL[1][-1], color='red', zorder=1)
+ax2.plot(SOL[0], SOL[1], color='#FF6600', zorder=0)
+ax2.scatter(SOL[0][0], SOL[1][0], color='#00FF00', zorder=1)
+ax2.scatter(SOL[0][-1], SOL[1][-1], color='#FF0000', zorder=1)
 ax2.set_xlabel('X Position (m)')
 ax2.set_ylabel('Y Position (m)')
 ax2.set_title('Lateral Flight Depiction')
 
 # Bottom-left: Z-Velocity over time
 ax3 = fig.add_subplot(2, 2, 3)
-ax3.plot(SOL[6], SOL[5], color='green')
-ax3.set_xlabel('Time (s)')
+ax3.plot(timestamps, SOL[5], color='#00FF66')
+ax3.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+ax3.xaxis.set_major_locator(mdates.AutoDateLocator())
+plt.setp(ax3.xaxis.get_majorticklabels(), rotation=30, ha='right')
+ax3.set_xlabel('Time')
 ax3.set_ylabel('Z Velocity (m/s)')
 ax3.set_title('Z Velocity Over Time')
 
 # Bottom-right: Z Position over time
 ax4 = fig.add_subplot(2, 2, 4)
-ax4.plot(SOL[6], SOL[2], color='b')
-ax4.set_xlabel('Time (s)')
+ax4.plot(timestamps, SOL[2], color='#4488FF')
+ax4.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+ax4.xaxis.set_major_locator(mdates.AutoDateLocator())
+plt.setp(ax4.xaxis.get_majorticklabels(), ha='right')
+ax4.set_xlabel('Time')
 ax4.set_ylabel('Z Position (m)')
 ax4.set_title('Z Position Over Time')
 
 # Adjust layout and show
 plt.tight_layout()
 plt.show()
+fig.savefig("fig.png", dpi=400)
